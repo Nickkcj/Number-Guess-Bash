@@ -20,10 +20,10 @@ USER_LOGIN() {
     GAMES_PLAYED=0
     BEST_GAME="None"
   else
-    # If user exists, extract their data
-    USER_ID=$(echo "$USER_DATA" | cut -d '|' -f 1)
-    GAMES_PLAYED=$(echo "$USER_DATA" | cut -d '|' -f 2)
-    BEST_GAME=$(echo "$USER_DATA" | cut -d '|' -f 3)
+    # If user exists, extract their data directly using SQL queries
+    USER_ID=$($PSQL "SELECT user_id FROM users WHERE username='$USERNAME'")
+    GAMES_PLAYED=$($PSQL "SELECT games_played FROM users WHERE username='$USERNAME'")
+    BEST_GAME=$($PSQL "SELECT best_game FROM users WHERE username='$USERNAME'")
     echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
   fi
 }
@@ -32,11 +32,10 @@ USER_LOGIN() {
 PLAY_GAME() {
   SECRET_NUMBER=$((RANDOM % 1000 + 1))
   echo "Guess the secret number between 1 and 1000:"
-  NUMBER_OF_GUESSES=0
+  NUMBER_OF_GUESSES=1
 
   while true; do
     read GUESS
-    ((NUMBER_OF_GUESSES++))
 
     # Validate input
     if ! [[ "$GUESS" =~ ^[0-9]+$ ]]; then
@@ -44,21 +43,19 @@ PLAY_GAME() {
       continue
     fi
 
+    ((NUMBER_OF_GUESSES++))
     # Compare guess
     if [[ $GUESS -lt $SECRET_NUMBER ]]; then
       echo "It's higher than that, guess again:"
     elif [[ $GUESS -gt $SECRET_NUMBER ]]; then
       echo "It's lower than that, guess again:"
     else
-      # Update user's game statistics in the database
       GAMES_PLAYED=$((GAMES_PLAYED + 1))
-      $PSQL "UPDATE users SET games_played=$GAMES_PLAYED WHERE user_id=$USER_ID"
+      $PSQL "UPDATE users SET games_played=$GAMES_PLAYED WHERE user_id=$USER_ID" > /dev/null
 
       if [[ "$BEST_GAME" == "None" || $NUMBER_OF_GUESSES -lt $BEST_GAME ]]; then
-        $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID"
+        $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID" > /dev/null
       fi
-
-      # Print success message and exit
       echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
       exit 0
     fi
