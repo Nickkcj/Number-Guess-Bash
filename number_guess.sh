@@ -54,19 +54,16 @@ PLAY_GAME() {
     elif [[ $GUESS -gt $SECRET_NUMBER ]]; then
       echo "It's lower than that, guess again:"
     else
-      # Correct guess, print the success message and exit
-      echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
-      
-      # Update user stats
+    # Update user stats
       GAMES_PLAYED=$((GAMES_PLAYED + 1))
       $PSQL "UPDATE users SET games_played=$GAMES_PLAYED WHERE user_id=$USER_ID"
       
-      # Update best game if applicable
       if [[ $BEST_GAME == "None" || $NUMBER_OF_GUESSES -lt $BEST_GAME ]]; then
         $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID"
       fi
-
-      # Exit the script after a successful guess
+      # Correct guess, print the success message and exit
+      echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
+      # Exit cleanly
       exit 0
     fi
   done
@@ -75,5 +72,6 @@ PLAY_GAME() {
 # Main script logic
 USER_LOGIN
 PLAY_GAME
+
 
 
