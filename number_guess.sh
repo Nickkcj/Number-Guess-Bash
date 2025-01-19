@@ -32,7 +32,7 @@ USER_LOGIN() {
 PLAY_GAME() {
   SECRET_NUMBER=$((RANDOM % 1000 + 1))
   echo "Guess the secret number between 1 and 1000:"
-  NUMBER_OF_GUESSES=1
+  NUMBER_OF_GUESSES=0
 
   while true; do
     read GUESS
