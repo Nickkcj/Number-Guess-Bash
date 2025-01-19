@@ -14,17 +14,17 @@ USER_LOGIN() {
     # If no data is found, it's a new user
     echo "Welcome, $USERNAME! It looks like this is your first time here."
     # Insert new user into the database
-    INSERT_USER=$($PSQL "INSERT INTO users (username) VALUES ('$USERNAME')")
+    $PSQL "INSERT INTO users (username) VALUES ('$USERNAME')"
     # Retrieve the new user's ID
     USER_ID=$($PSQL "SELECT user_id FROM users WHERE username='$USERNAME'")
     GAMES_PLAYED=0
     BEST_GAME="None"
-    
   else
-    echo "Welcome back, $USERNAME! You have played $($PSQL "SELECT games_played FROM users WHERE username='$USERNAME'") games, and your best game took $($PSQL "SELECT best_game FROM users WHERE username='$USERNAME'") guesses."
+    # If user exists, extract their data
     USER_ID=$(echo "$USER_DATA" | cut -d '|' -f 1)
     GAMES_PLAYED=$(echo "$USER_DATA" | cut -d '|' -f 2)
     BEST_GAME=$(echo "$USER_DATA" | cut -d '|' -f 3)
+    echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
   fi
 }
 
@@ -36,6 +36,7 @@ PLAY_GAME() {
 
   while true; do
     read GUESS
+    ((NUMBER_OF_GUESSES++))
 
     # Validate input
     if ! [[ "$GUESS" =~ ^[0-9]+$ ]]; then
@@ -43,22 +44,22 @@ PLAY_GAME() {
       continue
     fi
 
-    ((NUMBER_OF_GUESSES++))
     # Compare guess
     if [[ $GUESS -lt $SECRET_NUMBER ]]; then
       echo "It's higher than that, guess again:"
     elif [[ $GUESS -gt $SECRET_NUMBER ]]; then
       echo "It's lower than that, guess again:"
     else
-    echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
+      # Update user's game statistics in the database
       GAMES_PLAYED=$((GAMES_PLAYED + 1))
       $PSQL "UPDATE users SET games_played=$GAMES_PLAYED WHERE user_id=$USER_ID"
 
       if [[ "$BEST_GAME" == "None" || $NUMBER_OF_GUESSES -lt $BEST_GAME ]]; then
         $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID"
-
       fi
-      
+
+      # Print success message and exit
+      echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
       exit 0
     fi
   done
@@ -67,3 +68,4 @@ PLAY_GAME() {
 # Main script logic
 USER_LOGIN
 PLAY_GAME
+
