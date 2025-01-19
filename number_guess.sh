@@ -19,19 +19,18 @@ USER_LOGIN() {
     GAMES_PLAYED=0
     BEST_GAME="None"
   else
-    # If data found, it means the user exists, so we retrieve the user stats
+    # If data found, retrieve user stats
     USER_ID=$(echo "$USER_DATA" | cut -d '|' -f 1)
     GAMES_PLAYED=$(echo "$USER_DATA" | cut -d '|' -f 2)
     BEST_GAME=$(echo "$USER_DATA" | cut -d '|' -f 3)
-    
-    # Print out the user's stats
+
+    # If BEST_GAME is NULL, set it to "None" for display
     if [[ "$BEST_GAME" == "NULL" ]]; then
       BEST_GAME="None"
     fi
     echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
   fi
 }
-
 
 # Function to play the game
 PLAY_GAME() {
@@ -55,17 +54,19 @@ PLAY_GAME() {
     elif [[ $GUESS -gt $SECRET_NUMBER ]]; then
       echo "It's lower than that, guess again:"
     else
-      # Correct guess
+      # Correct guess, print the success message and exit
       echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
       
       # Update user stats
       GAMES_PLAYED=$((GAMES_PLAYED + 1))
       $PSQL "UPDATE users SET games_played=$GAMES_PLAYED WHERE user_id=$USER_ID"
       
+      # Update best game if applicable
       if [[ $BEST_GAME == "None" || $NUMBER_OF_GUESSES -lt $BEST_GAME ]]; then
         $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID"
       fi
-      
+
+      # Exit the script after a successful guess
       exit 0
     fi
   done
@@ -74,3 +75,5 @@ PLAY_GAME() {
 # Main script logic
 USER_LOGIN
 PLAY_GAME
+
+
