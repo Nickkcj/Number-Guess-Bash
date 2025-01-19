@@ -25,7 +25,7 @@ USER_LOGIN() {
     GAMES_PLAYED=$(echo "$USER_DATA" | cut -d '|' -f 2)
     BEST_GAME=$(echo "$USER_DATA" | cut -d '|' -f 3)
     # Print the welcome back message
-    echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
+    echo "Welcome back, "$USERNAME"! You have played "$GAMES_PLAYED" games, and your best game took "$BEST_GAME" guesses."
   fi
 }
 
@@ -60,7 +60,7 @@ PLAY_GAME() {
       fi
 
       # Correct guess, print the success message and exit
-      echo "You guessed it in $NUMBER_OF_GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
+      echo "You guessed it in "$NUMBER_OF_GUESSES" tries. The secret number was "$SECRET_NUMBER". Nice job!"
       exit 0
     fi
   done
