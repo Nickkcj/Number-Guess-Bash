@@ -7,24 +7,31 @@ USER_LOGIN() {
   echo "Enter your username:"
   read USERNAME
 
-  # Check if username exists
+  # Check if username exists in the database
   USER_DATA=$($PSQL "SELECT user_id, games_played, best_game FROM users WHERE username='$USERNAME'")
-  
-  if [[ -z $USER_DATA ]]; then
-    # New user
+
+  # If no data found, it's a new user
+  if [[ -z "$USER_DATA" ]]; then
     echo "Welcome, $USERNAME! It looks like this is your first time here."
+    # Insert new user into the database
     INSERT_USER=$($PSQL "INSERT INTO users (username) VALUES ('$USERNAME')")
     USER_ID=$($PSQL "SELECT user_id FROM users WHERE username='$USERNAME'")
     GAMES_PLAYED=0
     BEST_GAME="None"
   else
-    # Returning user
+    # If data found, it means the user exists, so we retrieve the user stats
     USER_ID=$(echo "$USER_DATA" | cut -d '|' -f 1)
     GAMES_PLAYED=$(echo "$USER_DATA" | cut -d '|' -f 2)
     BEST_GAME=$(echo "$USER_DATA" | cut -d '|' -f 3)
+    
+    # Print out the user's stats
+    if [[ "$BEST_GAME" == "NULL" ]]; then
+      BEST_GAME="None"
+    fi
     echo "Welcome back, $USERNAME! You have played $GAMES_PLAYED games, and your best game took $BEST_GAME guesses."
   fi
 }
+
 
 # Function to play the game
 PLAY_GAME() {
@@ -59,7 +66,7 @@ PLAY_GAME() {
         $PSQL "UPDATE users SET best_game=$NUMBER_OF_GUESSES WHERE user_id=$USER_ID"
       fi
       
-      break
+      exit 0
     fi
   done
 }
